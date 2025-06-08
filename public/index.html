@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <title>Game Loto</title>
+  <style>
+    /* Styles như bạn đã có, thêm nút đổi vé, chỗ nhập tên, chọn mode */
+    .board {
+      display: grid;
+      grid-template-columns: repeat(5, 60px);
+      gap: 8px;
+      justify-content: center;
+      margin: 20px 0;
+    }
+    .cell {
+      width: 60px;
+      height: 60px;
+      background: #eee;
+      line-height: 60px;
+      font-weight: bold;
+      font-size: 20px;
+      cursor: pointer;
+      border-radius: 6px;
+      user-select: none;
+    }
+    .marked {
+      background: #4caf50;
+      color: white;
+    }
+    button {
+      padding: 8px 15px;
+      margin: 5px;
+      font-size: 16px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Game Loto</h1>
+
+  <div id="join-section">
+    <input type="text" id="name" placeholder="Nhập tên bạn" />
+    <select id="room-select">
+      <option value="Phong1">Phòng 1</option>
+      <option value="Phong2">Phòng 2</option>
+      <option value="Phong3">Phòng 3</option>
+      <option value="Phong4">Phòng 4</option>
+      <option value="Phong5">Phòng 5</option>
+    </select>
+    <select id="mode-select">
+      <option value="solo">Solo (Chơi đơn)</option>
+      <option value="team">Team (Nhóm)</option>
+    </select>
+    <button id="joinBtn">Vào phòng</button>
+  </div>
+
+  <div id="room-info"></div>
+
+  <div id="game-section" style="display:none;">
+    <button id="changeTicketBtn">Đổi vé</button>
+    <button id="readyBtn">Sẵn sàng</button>
+    <div class="board" id="board"></div>
+    <div>
+      <button id="bingoBtn" disabled>Bingo!</button>
+      <button id="continueBtn" style="display:none;">Chơi tiếp</button>
+      <button id="leaveBtn">Thoát phòng</button>
+    </div>
+    <div id="messages"></div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="main.js"></script>
+</body>
+</html>

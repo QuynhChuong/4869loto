@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>Phòng Loto</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding: 20px;
+    }
+    h2 {
+      margin-top: 0;
+    }
+    .board {
+      display: grid;
+      grid-template-columns: repeat(5, 60px);
+      gap: 10px;
+      justify-content: center;
+      margin: 20px 0;
+    }
+    .cell {
+      width: 60px;
+      height: 60px;
+      background-color: #eee;
+      line-height: 60px;
+      border-radius: 8px;
+      font-size: 20px;
+      cursor: pointer;
+      user-select: none;
+    }
+    .cell.marked {
+      background-color: #4caf50;
+      color: white;
+    }
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      margin: 10px;
+    }
+    #status {
+      margin-top: 20px;
+      font-weight: bold;
+      color: #555;
+    }
+  </style>
+</head>
+<body>
+  <h2 id="room-name">Phòng: </h2>
+  <div class="board" id="ticket"></div>
+  <button id="startBtn">Bắt đầu</button>
+  <button id="bingoBtn" disabled>Bingo!</button>
+  <div id="status">Chờ người chơi khác...</div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const socket = io();
+
+    // Lấy tên phòng từ URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const room = urlParams.get('room');
+    document.getElementById('room-name').textContent = 'Phòng: ' + room;
+
+    let ticket = []; // vé số người chơi
+    let started = false;
+
+    // Hàm tạo vé ngẫu nhiên 5x5
+    function generateTicket() {
+      let nums = Array.from({length: 75}, (_, i) => i + 1);
+      nums.sort(() => Math.random() - 0.5);
+      return nums.slice(0, 25);
+    }
+
+    function renderTicket() {
+      const board = document.getElementById('ticket');
+      board.innerHTML = '';
+      ticket.forEach((num, i) => {
+        const cell = document.createElement('div');
+        cell.className = 'cell';
+        cell.textContent = num;
+        cell.dataset.num = num;
+        cell.addEventListener('click', () => {
+          if (!started) return;
+          cell.classList.toggle('marked');
+        });
+        board.appendChild(cell);
+      });
+    }
+
+    // Khi nhấn nút Bắt đầu
+    document.getElementById('startBtn').addEventListener('click', () => {
+      socket.emit('ready', room);
+      document.getElementById('status').textContent = 'Đang chờ người chơi khác...';
+      document.getElementById('startBtn').disabled = true;
+    });
+
+    // Nhấn Bingo!
+    document.getElementById('bingoBtn').addEventListener('click', () => {
+      socket.emit('bingo', room);
+    });
+
+    // Socket.IO
+    socket.emit('joinRoom', room);
+
+    socket.on('startGame', () => {
+      started = true;
+      document.getElementById('status').textContent = 'Trò chơi bắt đầu!';
+      document.getElementById('bingoBtn').disabled = false;
+    });
+
+    socket.on('number', (num) => {
+      document.getElementById('status').textContent = 'Số được gọi: ' + num;
+    });
+
+    socket.on('winner', (msg) => {
+      document.getElementById('status').textContent = msg;
+    });
+
+    // Khởi tạo vé và hiển thị
+    ticket = generateTicket();
+    renderTicket();
+  </script>
+</body>
+</html>
