@@ -2,41 +2,208 @@
 <html lang="vi">
 <head>
   <meta charset="UTF-8" />
-  <title>Game Loto</title>
+  <title>Game Lô Tô - Black Group</title>
   <style>
-    /* Styles như bạn đã có, thêm nút đổi vé, chỗ nhập tên, chọn mode */
+    @import url('https://fonts.googleapis.com/css2?family=Luckiest+Guy&family=Poppins:wght@400;600&display=swap');
+
+    * {
+      box-sizing: border-box;
+      font-family: 'Poppins', sans-serif;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      background: url('https://thumbs.dreamstime.com/b/bingo-balls-glowing-green-background-vector-illustration-bingo-balls-glowing-background-vector-illustration-image-205263769.jpg') no-repeat center center fixed;
+      background-size: cover;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    h1 {
+      font-family: 'Luckiest Guy', cursive;
+      margin-top: 30px;
+      font-size: 48px;
+      color: #ffd700;
+      text-shadow: 2px 2px 8px #000;
+    }
+
+    #join-section, #game-section {
+      background: rgba(0, 0, 0, 0.75);
+      padding: 20px 30px;
+      border-radius: 16px;
+      box-shadow: 0 0 20px #ffd700;
+      margin: 20px;
+      width: 90%;
+      max-width: 550px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    input, select {
+      padding: 12px;
+      margin: 10px 0;
+      font-size: 16px;
+      width: 100%;
+      border: none;
+      border-radius: 10px;
+      outline: none;
+    }
+
+    button {
+      padding: 10px 20px;
+      margin: 8px;
+      font-size: 18px;
+      background-color: #ff3b3b;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: 0.3s;
+      font-weight: bold;
+      box-shadow: 0 4px 0 #bb1f1f;
+    }
+
+    button:hover {
+      background-color: #ff7070;
+    }
+
     .board {
       display: grid;
       grid-template-columns: repeat(5, 60px);
-      gap: 8px;
+      gap: 10px;
       justify-content: center;
       margin: 20px 0;
     }
+
     .cell {
       width: 60px;
       height: 60px;
-      background: #eee;
+      background: radial-gradient(circle, #fff, #ddd);
       line-height: 60px;
+      text-align: center;
+      font-size: 22px;
+      border-radius: 50%;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.6);
+      color: #000;
       font-weight: bold;
-      font-size: 20px;
-      cursor: pointer;
-      border-radius: 6px;
-      user-select: none;
+      transition: transform 0.2s, background 0.3s;
     }
+
+    .cell:hover {
+      transform: scale(1.1);
+    }
+
     .marked {
-      background: #4caf50;
+      background: radial-gradient(circle, #ff0000, #bb0000);
+      color: #fff;
+    }
+
+    #room-info {
+      text-align: center;
+      font-weight: bold;
+      margin-top: 10px;
+      color: #ffd700;
+    }
+
+    #messages {
+      margin-top: 15px;
+      color: #fff;
+    }
+
+    .number-ball {
+      width: 40px;
+      height: 40px;
+      background: radial-gradient(circle at 30% 30%, #ffd700, #c79200);
+      border-radius: 50%;
+      color: #000;
+      font-weight: bold;
+      font-size: 18px;
+      line-height: 40px;
+      text-align: center;
+      margin: 5px auto;
+      box-shadow: 0 0 8px #fff;
+      user-select: none;
+      cursor: default;
+      transition: transform 0.3s;
+    }
+
+    .number-ball.new {
+      animation: pop 0.5s ease forwards;
+    }
+
+    @keyframes pop {
+      0% { transform: scale(0); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    @media (max-width: 600px) {
+      .board {
+        grid-template-columns: repeat(5, 50px);
+      }
+      .cell {
+        width: 50px;
+        height: 50px;
+        line-height: 50px;
+        font-size: 18px;
+      }
+    }
+
+    #called-numbers {
+      position: fixed;
+      top: 100px;
+      right: 20px;
+      width: 120px;
+      background: rgba(0,0,0,0.6);
+      border-radius: 12px;
+      padding: 10px;
+      max-height: 80vh;
+      overflow-y: auto;
+      box-shadow: 0 0 10px #ffd700;
+    }
+
+    #player-list {
+      position: fixed;
+      top: 100px;
+      right: 160px;
+      width: 160px;
+      background: rgba(0,0,0,0.6);
       color: white;
+      border-radius: 12px;
+      padding: 10px;
+      max-height: 80vh;
+      overflow-y: auto;
+      box-shadow: 0 0 10px #00ffff;
     }
-    button {
-      padding: 8px 15px;
-      margin: 5px;
-      font-size: 16px;
+
+    button:disabled {
+      background-color: #999 !important;
+      cursor: not-allowed;
+      box-shadow: none;
+      color: #666;
     }
+
   </style>
 </head>
 <body>
-  <h1>Game Loto</h1>
+  <h1>🎱 Chào mừng đến với thế giới game Lô Tô 🎱</h1>
 
+  <!-- Danh sách số đã gọi -->
+  <div id="called-numbers">
+    <h3 style="color: #ffd700; text-align:center; margin: 0 0 10px;">Số đã gọi</h3>
+  </div>
+
+  <!-- Danh sách người chơi -->
+  <div id="player-list">
+    <h3 style="color: #00ffff; text-align:center; margin: 0 0 10px;">Người chơi</h3>
+    <ul id="player-names" style="list-style: none; padding-left: 10px; margin: 0;"></ul>
+  </div>
+
+  <!-- Giao diện tham gia phòng -->
   <div id="join-section">
     <input type="text" id="name" placeholder="Nhập tên bạn" />
     <select id="room-select">
@@ -50,24 +217,57 @@
       <option value="solo">Solo (Chơi đơn)</option>
       <option value="team">Team (Nhóm)</option>
     </select>
-    <button id="joinBtn">Vào phòng</button>
+    <button id="joinBtn">🎮 Vào phòng</button>
   </div>
 
   <div id="room-info"></div>
 
+  <!-- Giao diện chính khi đã vào phòng -->
   <div id="game-section" style="display:none;">
-    <button id="changeTicketBtn">Đổi vé</button>
-    <button id="readyBtn">Sẵn sàng</button>
+    <button id="changeTicketBtn" disabled>🔄 Đổi vé</button>
+    <button id="readyBtn" disabled>✅ Sẵn sàng</button>
     <div class="board" id="board"></div>
     <div>
-      <button id="bingoBtn" disabled>Bingo!</button>
-      <button id="continueBtn" style="display:none;">Chơi tiếp</button>
-      <button id="leaveBtn">Thoát phòng</button>
+      <button id="bingoBtn" disabled>🎉 Bingo!</button>
+      <button id="continueBtn" style="display:none;">🔁 Chơi tiếp</button>
+      <button id="leaveBtn">🚪 Thoát phòng</button>
     </div>
     <div id="messages"></div>
   </div>
 
+  <!-- Âm thanh khi nhấn nút -->
+  <audio id="clickSound" src="https://www.soundjay.com/buttons/sounds/button-16.mp3" preload="auto"></audio>
+
   <script src="/socket.io/socket.io.js"></script>
   <script src="main.js"></script>
+  <script>
+    const changeTicketBtn = document.getElementById('changeTicketBtn');
+    const readyBtn = document.getElementById('readyBtn');
+
+    // Khi người chơi join thành công, bật nút
+    function enableGameButtons() {
+      changeTicketBtn.disabled = false;
+      readyBtn.disabled = false;
+    }
+
+    // Khi nhấn sẵn sàng, tắt nút
+    readyBtn.addEventListener('click', () => {
+      readyBtn.disabled = true;
+      changeTicketBtn.disabled = true;
+    });
+
+    // Thêm âm thanh khi nhấn nút
+    const clickSound = document.getElementById('clickSound');
+    document.querySelectorAll('button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (!btn.disabled) {
+          clickSound.currentTime = 0;
+          clickSound.play();
+        }
+      });
+    });
+  </script>
+<audio id="clickSound" src="click.mp3" preload="auto"></audio>
+
 </body>
 </html>

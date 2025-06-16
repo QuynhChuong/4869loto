@@ -1,3 +1,4 @@
+
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
@@ -18,9 +19,7 @@ function generateTicket() {
 }
 
 // Kiểm tra vé Bingo - đủ 1 hàng hoặc cột được đánh dấu
-// marked: mảng boolean 25 phần tử tương ứng từng số
 function checkBingo(marked) {
-  // Kiểm tra hàng
   for (let i = 0; i < 5; i++) {
     let row = true;
     for (let j = 0; j < 5; j++) {
@@ -28,7 +27,6 @@ function checkBingo(marked) {
     }
     if (row) return true;
   }
-  // Kiểm tra cột
   for (let j = 0; j < 5; j++) {
     let col = true;
     for (let i = 0; i < 5; i++) {
@@ -62,13 +60,37 @@ io.on('connection', (socket) => {
       alive: true,
     };
 
+    // Kick nếu chưa sẵn sàng sau 1 phút
+    setTimeout(() => {
+      const player = rooms[room]?.players[socket.id];
+      if (player && !player.ready) {
+        delete rooms[room].players[socket.id];
+        socket.leave(room);
+        socket.emit('kick', 'Bạn đã bị loại do không sẵn sàng sau 1 phút');
+
+        io.to(room).emit('roomInfo', {
+          count: Object.keys(rooms[room].players).length,
+          mode,
+          players: Object.values(rooms[room].players).map(p =>
+            `${p.name} (${p.ready ? 'Đã sẵn sàng' : 'Chưa sẵn sàng'})`
+          ),
+        });
+
+        if (Object.keys(rooms[room].players).length === 0) {
+          clearInterval(rooms[room].callInterval);
+          delete rooms[room];
+        }
+      }
+    }, 60000);
+
     io.to(room).emit('roomInfo', {
       count: Object.keys(rooms[room].players).length,
       mode,
-      players: Object.values(rooms[room].players).map(p => p.name),
+      players: Object.values(rooms[room].players).map(p =>
+        `${p.name} (${p.ready ? 'Đã sẵn sàng' : 'Chưa sẵn sàng'})`
+      ),
     });
 
-    // Gửi vé cho người chơi
     socket.emit('ticket', rooms[room].players[socket.id].ticket);
     socket.emit('gameStatus', rooms[room].gameStarted ? 'started' : 'waiting');
   });
@@ -76,7 +98,7 @@ io.on('connection', (socket) => {
   socket.on('changeTicket', (room) => {
     const roomData = rooms[room];
     if (!roomData) return;
-    if (roomData.gameStarted) return; // ko đổi vé khi game bắt đầu
+    if (roomData.gameStarted) return;
 
     const player = roomData.players[socket.id];
     if (player) {
@@ -95,8 +117,15 @@ io.on('connection', (socket) => {
 
     player.ready = true;
 
-    // Nếu chế độ solo hoặc team chờ tất cả ready mới bắt đầu
     let allReady = Object.values(roomData.players).every(p => p.ready);
+
+    io.to(room).emit('roomInfo', {
+      count: Object.keys(roomData.players).length,
+      mode: player.mode,
+      players: Object.values(roomData.players).map(p =>
+        `${p.name} (${p.ready ? 'Đã sẵn sàng' : 'Chưa sẵn sàng'})`
+      ),
+    });
 
     if (allReady && !roomData.gameStarted) {
       roomData.gameStarted = true;
@@ -104,7 +133,6 @@ io.on('connection', (socket) => {
 
       io.to(room).emit('startGame');
 
-      // Gọi số mỗi 5 giây
       roomData.callInterval = setInterval(() => {
         let availableNumbers = Array.from({ length: 75 }, (_, i) => i + 1)
           .filter(n => !roomData.numbersCalled.includes(n));
@@ -130,7 +158,6 @@ io.on('connection', (socket) => {
     const player = roomData.players[socket.id];
     if (!player || !player.alive) return;
 
-    // Đánh dấu số nếu số đó có trên vé
     const index = player.ticket.indexOf(number);
     if (index !== -1) {
       player.marked[index] = true;
@@ -144,13 +171,11 @@ io.on('connection', (socket) => {
     const player = roomData.players[socket.id];
     if (!player || !player.alive) return;
 
-    // Kiểm tra vé
     if (checkBingo(player.marked)) {
       io.to(room).emit('winner', `${player.name} đã thắng!`);
       clearInterval(roomData.callInterval);
       roomData.gameStarted = false;
     } else {
-      // Vé không hợp lệ -> loại người chơi đó ra khỏi ván
       player.alive = false;
       socket.emit('invalidBingo', 'Vé của bạn không hợp lệ, bạn đã bị loại khỏi ván này');
     }
@@ -161,7 +186,6 @@ io.on('connection', (socket) => {
     if (!roomData) return;
     if (roomData.gameStarted) return;
 
-    // Reset trạng thái để chơi ván mới
     Object.values(roomData.players).forEach(p => {
       p.ready = false;
       p.marked = new Array(25).fill(false);
@@ -178,10 +202,11 @@ io.on('connection', (socket) => {
 
     io.to(room).emit('roomInfo', {
       count: Object.keys(rooms[room].players).length,
-      players: Object.values(rooms[room].players).map(p => p.name),
+      players: Object.values(rooms[room].players).map(p =>
+        `${p.name} (${p.ready ? 'Đã sẵn sàng' : 'Chưa sẵn sàng'})`
+      ),
     });
 
-    // Nếu phòng hết người thì xóa
     if (Object.keys(rooms[room].players).length === 0) {
       clearInterval(rooms[room].callInterval);
       delete rooms[room];
@@ -194,7 +219,9 @@ io.on('connection', (socket) => {
         delete rooms[room].players[socket.id];
         io.to(room).emit('roomInfo', {
           count: Object.keys(rooms[room].players).length,
-          players: Object.values(rooms[room].players).map(p => p.name),
+          players: Object.values(rooms[room].players).map(p =>
+            `${p.name} (${p.ready ? 'Đã sẵn sàng' : 'Chưa sẵn sàng'})`
+          ),
         });
         if (Object.keys(rooms[room].players).length === 0) {
           clearInterval(rooms[room].callInterval);
@@ -206,7 +233,6 @@ io.on('connection', (socket) => {
 });
 
 const PORT = process.env.PORT || 3000;
-
 server.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
